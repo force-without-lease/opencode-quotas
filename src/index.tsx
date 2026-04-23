@@ -5,11 +5,11 @@ import { loadCache, refreshAndGetState } from "./cache.js";
 import { renderBarUnicode } from "./format.js";
 import { renderPanelText } from "./panel.js";
 
-const POLL_MS = 90_000;
+const DEFAULT_POLL_MS = 90_000;
+const KV_REFRESH_MODE = "quota.refreshMode";
+const KV_REFRESH_INTERVAL = "quota.refreshInterval";
 
-function pad(s: string, len: number): string {
-  return s.length >= len ? s : s + " ".repeat(len - s.length);
-}
+type RefreshMode = "poll" | "message";
 
 const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
   const [state, setState] = createSignal<PanelState>({
@@ -28,8 +28,44 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
     setState(s);
   }
 
-  // Register slots FIRST so the panel renders immediately (with loading state).
-  // Data loading happens in the background so the init function returns fast.
+  // Polling state
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let eventUnsub: (() => void) | null = null;
+
+  function getMode(): RefreshMode {
+    return (api.kv.get<string>(KV_REFRESH_MODE) as RefreshMode) || "poll";
+  }
+
+  function getIntervalMs(): number {
+    const stored = api.kv.get<number>(KV_REFRESH_INTERVAL);
+    return typeof stored === "number" && stored >= 5000 ? stored : DEFAULT_POLL_MS;
+  }
+
+  function stopAll() {
+    if (pollTimer !== null) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    if (eventUnsub !== null) {
+      eventUnsub();
+      eventUnsub = null;
+    }
+  }
+
+  function applyMode() {
+    stopAll();
+    const mode = getMode();
+    const ms = getIntervalMs();
+
+    // Always run a polling timer (even in message mode, as a fallback)
+    pollTimer = setInterval(() => void refresh(), mode === "message" ? 300_000 : ms);
+
+    if (mode === "message") {
+      eventUnsub = api.event.on("message.updated", () => void refresh());
+    }
+  }
+
+  // --- Slot registration ---
   api.slots.register({
     slots: {
       sidebar_footer(ctx, _props) {
@@ -61,10 +97,20 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
     },
   });
 
-  // Fire-and-forget: load cache then fetch, update signal when done
+  // --- Background data loading ---
   void loadCache().then(refresh);
-  const interval = setInterval(() => void refresh(), POLL_MS);
-  api.lifecycle.onDispose(() => clearInterval(interval));
+  applyMode();
+  api.lifecycle.onDispose(stopAll);
+
+  // --- Commands ---
+  const INTERVAL_OPTIONS = [
+    { title: "Every message", value: "message", description: "Refresh after each message in/out" },
+    { title: "Every 30 seconds", value: "30", description: "Polling every 30s" },
+    { title: "Every 60 seconds", value: "60", description: "Polling every 60s" },
+    { title: "Every 90 seconds (default)", value: "90", description: "Polling every 90s" },
+    { title: "Every 2 minutes", value: "120", description: "Polling every 120s" },
+    { title: "Every 5 minutes", value: "300", description: "Polling every 300s" },
+  ];
 
   api.command.register(() => [
     {
@@ -80,6 +126,55 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
           title: s.title,
           message: renderPanelText(s),
           duration: 8000,
+        });
+      },
+    },
+    {
+      title: "Quota: Set refresh mode",
+      value: "quota-refresh",
+      description: "Choose how often quota data refreshes",
+      category: "Quota",
+      slash: { name: "quota-refresh" },
+      onSelect() {
+        api.ui.dialog.replace(() =>
+          api.ui.DialogSelect({
+            title: "Quota refresh mode",
+            options: INTERVAL_OPTIONS,
+            onSelect(option) {
+              if (option.value === "message") {
+                api.kv.set(KV_REFRESH_MODE, "message");
+              } else {
+                const secs = parseInt(option.value as string, 10);
+                api.kv.set(KV_REFRESH_MODE, "poll");
+                api.kv.set(KV_REFRESH_INTERVAL, secs * 1000);
+              }
+              applyMode();
+              api.ui.dialog.clear();
+              api.ui.toast({
+                variant: "success",
+                title: "Quota refresh updated",
+                message: option.title,
+                duration: 3000,
+              });
+            },
+          })
+        );
+      },
+    },
+    {
+      title: "Quota: Refresh now",
+      value: "quota-now",
+      description: "Force an immediate quota refresh",
+      category: "Quota",
+      slash: { name: "quota-now" },
+      onSelect() {
+        void refresh().then(() => {
+          api.ui.toast({
+            variant: "success",
+            title: "Quota refreshed",
+            message: renderPanelText(state()),
+            duration: 5000,
+          });
         });
       },
     },
