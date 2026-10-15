@@ -2,27 +2,21 @@
 export interface UsageApiResponse {
   five_hour: UsageBucket;
   seven_day: UsageBucket;
-  seven_day_sonnet?: UsageBucket | null;
-  seven_day_opus?: UsageBucket | null;
-  seven_day_omelette?: UsageBucket | null;
-  seven_day_oauth_apps?: UsageBucket | null;
-  seven_day_cowork?: UsageBucket | null;
-  iguana_necktie?: UsageBucket | null;
-  omelette_promotional?: UsageBucket | null;
-  extra_usage?: ExtraUsage | null;
+  limits?: UsageLimit[] | null;
+}
+
+/** Entry of `limits`; per-model weekly caps have kind "weekly_scoped". */
+export interface UsageLimit {
+  kind?: string | null;
+  percent?: number | null;
+  resets_at?: string | null;
+  is_active?: boolean | null;
+  scope?: { model?: { display_name?: string | null } | null } | null;
 }
 
 export interface UsageBucket {
   utilization: number;
   resets_at: string;
-}
-
-export interface ExtraUsage {
-  is_enabled: boolean;
-  monthly_limit: number | null;
-  used_credits: number | null;
-  utilization: number | null;
-  currency: string | null;
 }
 
 /** Normalized row data for rendering */
@@ -41,10 +35,8 @@ export interface CachedUsage {
   fiveHourResetsAt: string;
   weeklyPercent: number;
   weeklyResetsAt: string;
-  weeklyDesignPercent: number | null;
-  weeklyDesignResetsAt: string | null;
-  sonnetPercent: number;
-  sonnetResetsAt: string;
+  fablePercent?: number | null;
+  fableResetsAt?: string | null;
   error: boolean;
   errorReason?: "auth" | "network" | "rate_limited" | "unknown";
 }
@@ -69,7 +61,7 @@ export interface CredentialFile {
 /** Panel state passed to renderers */
 export interface PanelState {
   title: string;
-  rows: [QuotaRow, QuotaRow, QuotaRow, QuotaRow];
+  rows: [QuotaRow, QuotaRow, QuotaRow];
   stale: boolean;
 }
 

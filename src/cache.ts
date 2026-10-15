@@ -114,19 +114,19 @@ export function stopPolling(): void {
 
 function responseToCache(result: Extract<FetchResult, { ok: true }>): CachedUsage {
   const d = result.data;
+  const fable = d.limits?.find(
+    (l) =>
+      l.kind === "weekly_scoped" &&
+      l.scope?.model?.display_name?.toLowerCase().includes("fable"),
+  );
   return {
     fetchedAtMs: result.fetchedAtMs,
     fiveHourPercent: clampPercent(d.five_hour.utilization),
     fiveHourResetsAt: d.five_hour.resets_at,
     weeklyPercent: clampPercent(d.seven_day.utilization),
     weeklyResetsAt: d.seven_day.resets_at,
-    weeklyDesignPercent:
-      d.seven_day_omelette != null
-        ? clampPercent(d.seven_day_omelette.utilization)
-        : null,
-    weeklyDesignResetsAt: d.seven_day_omelette?.resets_at ?? null,
-    sonnetPercent: clampPercent(d.seven_day_sonnet?.utilization ?? 0),
-    sonnetResetsAt: d.seven_day_sonnet?.resets_at ?? d.seven_day.resets_at,
+    fablePercent: fable ? clampPercent(fable.percent) : null,
+    fableResetsAt: fable?.resets_at ?? null,
     error: false,
   };
 }
@@ -138,10 +138,8 @@ function errorCache(reason: CachedUsage["errorReason"], now: number): CachedUsag
     fiveHourResetsAt: "",
     weeklyPercent: 0,
     weeklyResetsAt: "",
-    weeklyDesignPercent: null,
-    weeklyDesignResetsAt: null,
-    sonnetPercent: 0,
-    sonnetResetsAt: "",
+    fablePercent: null,
+    fableResetsAt: null,
     error: true,
     errorReason: reason,
   };
@@ -155,8 +153,7 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
       rows: [
         loadingRow("5-hour limit"),
         loadingRow("Weekly \u00b7 all models"),
-        loadingRow("Weekly \u00b7 Claude Design"),
-        loadingRow("Sonnet only"),
+        loadingRow("Weekly \u00b7 Fable"),
       ],
     };
   }
@@ -177,16 +174,12 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
       rows: [
         placeholderRow("5-hour limit", status),
         placeholderRow("Weekly \u00b7 all models", status),
-        placeholderRow("Weekly \u00b7 Claude Design", status),
-        placeholderRow("Sonnet only", status),
+        placeholderRow("Weekly \u00b7 Fable", status),
       ],
     };
   }
 
   const title = stale ? "Plan usage (stale)" : "Plan usage";
-
-  const designStatus: QuotaRow["status"] =
-    data.weeklyDesignPercent === null ? "unavailable" : "ok";
 
   return {
     title,
@@ -194,10 +187,9 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     rows: [
       makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, now),
       makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, now),
-      data.weeklyDesignPercent !== null && data.weeklyDesignResetsAt !== null
-        ? makeRow("Weekly \u00b7 Claude Design", data.weeklyDesignPercent, data.weeklyDesignResetsAt, now)
-        : placeholderRow("Weekly \u00b7 Claude Design", designStatus),
-      makeRow("Sonnet only", data.sonnetPercent, data.sonnetResetsAt, now),
+      data.fablePercent != null && data.fableResetsAt != null
+        ? makeRow("Weekly \u00b7 Fable", data.fablePercent, data.fableResetsAt, now)
+        : placeholderRow("Weekly \u00b7 Fable", "unavailable"),
     ],
   };
 }
@@ -234,7 +226,6 @@ function isValidCache(v: unknown): v is CachedUsage {
   return (
     typeof obj["fetchedAtMs"] === "number" &&
     typeof obj["fiveHourPercent"] === "number" &&
-    typeof obj["weeklyPercent"] === "number" &&
-    typeof obj["sonnetPercent"] === "number"
+    typeof obj["weeklyPercent"] === "number"
   );
 }

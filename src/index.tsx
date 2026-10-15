@@ -18,8 +18,7 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
     rows: [
       { label: "5-hour limit", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
       { label: "Weekly \u00b7 all models", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
-      { label: "Weekly \u00b7 Claude Design", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
-      { label: "Sonnet only", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
+      { label: "Weekly \u00b7 Fable", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
     ],
   });
 

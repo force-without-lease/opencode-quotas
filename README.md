@@ -4,12 +4,11 @@ OpenCode TUI plugin that adds a "Plan usage" panel to the sidebar, showing Claud
 
 ## What it does
 
-Displays four quota rows in the sidebar footer:
+Displays three quota rows in the sidebar footer:
 
 - **5-hour limit** -- rolling 5-hour usage window
 - **Weekly, all models** -- 7-day aggregate across all models
-- **Weekly, Claude Design** -- 7-day Claude Design usage
-- **Sonnet only** -- 7-day Sonnet-specific usage
+- **Weekly, Fable** -- 7-day Fable usage (per-model cap, shown as unavailable if the plan has none)
 
 Each row shows a progress bar, percentage, and reset countdown. Data is fetched from the Anthropic OAuth usage API and cached locally.
 
