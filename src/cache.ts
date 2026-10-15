@@ -9,7 +9,6 @@ const CACHE_DIR = join(homedir(), ".cache", "opencode-claudesub-quotas");
 const CACHE_FILE = join(CACHE_DIR, "usage-cache.json");
 
 const POLL_INTERVAL_MS = 90_000;
-const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 let cachedData: CachedUsage | null = null;
 let lastFetchAttemptMs = 0;
@@ -148,7 +147,6 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
   if (data === null) {
     return {
       title: "Plan usage",
-      stale: false,
       rows: [
         loadingRow("5-hour limit"),
         loadingRow("Weekly \u00b7 all models"),
@@ -157,25 +155,18 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     };
   }
 
-  const age = now - data.fetchedAtMs;
-  const stale = age > STALE_THRESHOLD_MS;
-
   if (data.error) {
     return {
       title:
         data.errorReason === "auth"
           ? "Plan usage (auth required)"
-          : "Plan usage (stale)",
-      stale: true,
+          : "Plan usage",
       rows: [],
     };
   }
 
-  const title = stale ? "Plan usage (stale)" : "Plan usage";
-
   return {
-    title,
-    stale,
+    title: "Plan usage",
     rows: [
       makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, now),
       makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, now),

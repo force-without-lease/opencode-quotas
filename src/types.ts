@@ -62,7 +62,6 @@ export interface CredentialFile {
 export interface PanelState {
   title: string;
   rows: QuotaRow[];
-  stale: boolean;
 }
 
 /** Render mode for the panel */
