@@ -6,6 +6,7 @@ import { renderBarUnicode } from "./format.js";
 import { renderPanelText } from "./panel.js";
 
 const DEFAULT_POLL_MS = 90_000;
+const MAX_POLL_MS = 120_000;
 const KV_REFRESH_MODE = "quota.refreshMode";
 const KV_REFRESH_INTERVAL = "quota.refreshInterval";
 
@@ -36,7 +37,9 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
 
   function getIntervalMs(): number {
     const stored = api.kv.get<number>(KV_REFRESH_INTERVAL);
-    return typeof stored === "number" && stored >= 5000 ? stored : DEFAULT_POLL_MS;
+    return typeof stored === "number" && stored >= 5000
+      ? Math.min(stored, MAX_POLL_MS)
+      : DEFAULT_POLL_MS;
   }
 
   function stopAll() {
@@ -56,7 +59,7 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
     const ms = getIntervalMs();
 
     // Always run a polling timer (even in message mode, as a fallback)
-    pollTimer = setInterval(() => void refresh(), mode === "message" ? 300_000 : ms);
+    pollTimer = setInterval(() => void refresh(), mode === "message" ? DEFAULT_POLL_MS : ms);
 
     if (mode === "message") {
       eventUnsub = api.event.on("message.updated", () => void refresh());
@@ -108,7 +111,6 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
     { title: "Every 60 seconds", value: "60", description: "Polling every 60s" },
     { title: "Every 90 seconds (default)", value: "90", description: "Polling every 90s" },
     { title: "Every 2 minutes", value: "120", description: "Polling every 120s" },
-    { title: "Every 5 minutes", value: "300", description: "Polling every 300s" },
   ];
 
   api.command.register(() => [
