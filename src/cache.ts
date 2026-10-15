@@ -9,6 +9,7 @@ const CACHE_DIR = join(homedir(), ".cache", "opencode-claudesub-quotas");
 const CACHE_FILE = join(CACHE_DIR, "usage-cache.json");
 
 const POLL_INTERVAL_MS = 90_000;
+const STALE_THRESHOLD_MS = 5 * 60 * 1000;
 
 let cachedData: CachedUsage | null = null;
 let lastFetchAttemptMs = 0;
@@ -155,10 +156,10 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     };
   }
 
-  if (data.error) {
+  if (data.error || now - data.fetchedAtMs > STALE_THRESHOLD_MS) {
     return {
       title:
-        data.errorReason === "auth"
+        data.error && data.errorReason === "auth"
           ? "Plan usage (auth required)"
           : "Plan usage",
       rows: [],
