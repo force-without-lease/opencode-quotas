@@ -8,7 +8,7 @@ Displays three quota rows in the sidebar footer:
 
 - **5-hour limit** -- rolling 5-hour usage window
 - **Weekly, all models** -- 7-day aggregate across all models
-- **Weekly, Fable** -- 7-day Fable usage (per-model cap, shown as unavailable if the plan has none)
+- **Weekly, Fable** -- 7-day Fable usage (per-model cap, hidden if the plan has none)
 
 Each row shows a progress bar, percentage, and reset countdown. Data is fetched from the Anthropic OAuth usage API and cached locally.
 

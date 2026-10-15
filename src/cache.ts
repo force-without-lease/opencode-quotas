@@ -187,9 +187,9 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     rows: [
       makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, now),
       makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, now),
-      data.fablePercent != null && data.fableResetsAt != null
-        ? makeRow("Weekly \u00b7 Fable", data.fablePercent, data.fableResetsAt, now)
-        : placeholderRow("Weekly \u00b7 Fable", "unavailable"),
+      ...(data.fablePercent != null && data.fableResetsAt != null
+        ? [makeRow("Weekly \u00b7 Fable", data.fablePercent, data.fableResetsAt, now)]
+        : []),
     ],
   };
 }
