@@ -156,7 +156,8 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     };
   }
 
-  if (data.error || now - data.fetchedAtMs > STALE_THRESHOLD_MS) {
+  const noData = data.fiveHourResetsAt === "";
+  if (noData || now - data.fetchedAtMs > STALE_THRESHOLD_MS) {
     return {
       title:
         data.error && data.errorReason === "auth"
