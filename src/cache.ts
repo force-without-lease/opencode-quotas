@@ -162,20 +162,14 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
   const stale = age > STALE_THRESHOLD_MS;
   const tooOld = age > MAX_STALE_MS;
 
-  if (data.error && tooOld) {
-    const status: QuotaRow["status"] =
-      data.errorReason === "auth" ? "auth_required" : "unavailable";
+  if (data.error && (tooOld || data.fiveHourResetsAt === "")) {
     return {
       title:
         data.errorReason === "auth"
           ? "Plan usage (auth required)"
           : "Plan usage (stale)",
       stale: true,
-      rows: [
-        placeholderRow("5-hour limit", status),
-        placeholderRow("Weekly \u00b7 all models", status),
-        placeholderRow("Weekly \u00b7 Fable", status),
-      ],
+      rows: [],
     };
   }
 
@@ -214,10 +208,6 @@ function makeRow(
 
 function loadingRow(label: string): QuotaRow {
   return { label, percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" };
-}
-
-function placeholderRow(label: string, status: QuotaRow["status"]): QuotaRow {
-  return { label, percent: 0, resetText: "--", resetsAtMs: 0, status };
 }
 
 function isValidCache(v: unknown): v is CachedUsage {

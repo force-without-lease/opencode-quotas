@@ -70,6 +70,7 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
       sidebar_footer(ctx, _props) {
         const s = state();
         const theme = ctx.theme.current;
+        if (s.rows.length === 0) return null;
         return (
           <box flexDirection="column" paddingX={1} gap={0}>
             <text color={theme.textMuted} dim>{"Plan usage"}</text>
