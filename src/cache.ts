@@ -10,7 +10,6 @@ const CACHE_FILE = join(CACHE_DIR, "usage-cache.json");
 
 const POLL_INTERVAL_MS = 90_000;
 const STALE_THRESHOLD_MS = 5 * 60 * 1000;
-const MAX_STALE_MS = 15 * 60 * 1000;
 
 let cachedData: CachedUsage | null = null;
 let lastFetchAttemptMs = 0;
@@ -160,9 +159,8 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
 
   const age = now - data.fetchedAtMs;
   const stale = age > STALE_THRESHOLD_MS;
-  const tooOld = age > MAX_STALE_MS;
 
-  if (data.error && (tooOld || data.fiveHourResetsAt === "")) {
+  if (data.error) {
     return {
       title:
         data.errorReason === "auth"
