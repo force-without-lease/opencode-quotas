@@ -1,5 +1,5 @@
 import type { FetchResult, UsageApiResponse } from "./types.js";
-import { resolveToken } from "./auth.js";
+import { resolveToken, type TokenResult } from "./auth.js";
 
 const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const API_TIMEOUT_MS = 10_000;
@@ -12,8 +12,10 @@ const USER_AGENT = "opencode-claudesub-quotas/0.1.0";
  * Returns a discriminated union: either the parsed response or an error tag.
  * Never throws. All failure modes are captured in the return type.
  */
-export async function fetchUsage(): Promise<FetchResult> {
-  const auth = await resolveToken();
+export async function fetchUsage(
+  getToken: () => Promise<TokenResult> = resolveToken,
+): Promise<FetchResult> {
+  const auth = await getToken();
   if (!auth.ok) {
     return { ok: false, error: "auth" };
   }

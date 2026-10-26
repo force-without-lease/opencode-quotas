@@ -3,6 +3,7 @@ import { join, dirname } from "node:path";
 import { homedir } from "node:os";
 import type { CachedUsage, FetchResult, PanelState, QuotaRow } from "./types.js";
 import { fetchUsage } from "./api.js";
+import { resolveToken, type TokenResult } from "./auth.js";
 import { formatResetCountdown, clampPercent } from "./format.js";
 
 const CACHE_DIR = join(homedir(), ".cache", "opencode-claudesub-quotas");
@@ -47,7 +48,9 @@ async function persistCache(data: CachedUsage): Promise<void> {
  * Fetches fresh data from the API if the cache is stale or missing,
  * updates the in-memory and on-disk caches, and returns the panel state.
  */
-export async function refreshAndGetState(): Promise<PanelState> {
+export async function refreshAndGetState(
+  getToken: () => Promise<TokenResult> = resolveToken,
+): Promise<PanelState> {
   const now = Date.now();
   const cacheAge = cachedData ? now - cachedData.fetchedAtMs : Infinity;
   const sinceLast = now - lastFetchAttemptMs;
@@ -59,7 +62,7 @@ export async function refreshAndGetState(): Promise<PanelState> {
 
   if (needsFetch) {
     lastFetchAttemptMs = now;
-    const result = await fetchUsage();
+    const result = await fetchUsage(getToken);
 
     if (result.ok) {
       cachedData = responseToCache(result);

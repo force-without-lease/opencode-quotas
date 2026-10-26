@@ -16,10 +16,11 @@ const CREDENTIALS_FILENAME = ".credentials.json";
  * a child process for secret-tool adds latency and failure modes that aren't
  * worth it for a polling widget. The file credential covers the common case.
  */
-export async function resolveToken(): Promise<
+export type TokenResult =
   | { ok: true; token: string }
-  | { ok: false; reason: "no_credentials" | "expired" }
-> {
+  | { ok: false; reason: "no_credentials" | "expired" };
+
+export async function resolveToken(): Promise<TokenResult> {
   const envToken = process.env["CLAUDE_CODE_OAUTH_TOKEN"];
   if (typeof envToken === "string" && envToken.length > 0) {
     return { ok: true, token: envToken };
