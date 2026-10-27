@@ -2,7 +2,7 @@ import { Plugin } from "@opencode/plugin"
 import { QuotaRpc } from "./src/rpc.js"
 
 export default Plugin.define({
-  id: "claudesub-quotas",
+  id: "opencode-quotas",
   async setup(context) {
     async function activeOAuthCredential(integrationID: string) {
       const connection = await context.integration.connection.active(integrationID)

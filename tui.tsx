@@ -25,7 +25,7 @@ const loadingState = (): PanelState => ({
 })
 
 export default Plugin.define({
-  id: "claudesub-quotas.tui",
+  id: "opencode-quotas.tui",
   setup(context) {
     const [claudeState, setClaudeState] = createSignal<PanelState>(loadingState())
     const [chatgptRows, setChatgptRows] = createSignal<QuotaRow[]>([])
@@ -82,7 +82,7 @@ export default Plugin.define({
       mode: "global",
       commands: [
         {
-          id: "claudesub.quota",
+          id: "opencode-quotas.quota",
           title: "Claude usage",
           slash: { name: "quota" },
           run: () =>

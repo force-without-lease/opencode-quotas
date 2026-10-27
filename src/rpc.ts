@@ -1,5 +1,5 @@
 export const QuotaRpc = {
-  id: "claudesub-quotas",
+  id: "opencode-quotas",
   methods: {
     token: {
       input: { type: "object", additionalProperties: false },
