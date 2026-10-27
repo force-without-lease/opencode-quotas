@@ -11,6 +11,7 @@ import type { PanelState, QuotaRow } from "./src/types.js"
 
 const POLL_MS = 90_000
 const STALE_MS = 5 * 60 * 1000
+const BAR_WIDTH = 28
 
 const loadingState = (): PanelState => ({
   title: "Claude usage",
@@ -26,9 +27,9 @@ const loadingState = (): PanelState => ({
 export default Plugin.define({
   id: "claudesub-quotas.tui",
   setup(context) {
-    const [state, setState] = createSignal<PanelState>(loadingState())
-    const [chatgpt, setChatgpt] = createSignal<QuotaRow[]>([])
-    let chatgptFetchedAt = 0
+    const [claudeState, setClaudeState] = createSignal<PanelState>(loadingState())
+    const [chatgptRows, setChatgptRows] = createSignal<QuotaRow[]>([])
+    let chatgptFetchedAtMs = 0
     const rpc = context.client.rpc(QuotaRpc)
 
     async function opencodeToken(): Promise<TokenResult> {
@@ -40,20 +41,31 @@ export default Plugin.define({
     }
 
     async function refreshChatgpt() {
-      const auth = await rpc.chatgpt({}).catch(() => undefined)
-      const rows = typeof auth?.token === "string" ? await fetchChatGptRows({ token: auth.token, accountID: auth.accountID }) : null
+      const rows = await fetchChatgptRowsWithOpencodeLogin()
       if (rows) {
-        chatgptFetchedAt = Date.now()
-        setChatgpt(rows)
-      } else if (Date.now() - chatgptFetchedAt > STALE_MS) {
-        setChatgpt([])
+        chatgptFetchedAtMs = Date.now()
+        setChatgptRows(rows)
+      } else if (Date.now() - chatgptFetchedAtMs > STALE_MS) {
+        setChatgptRows([])
       }
+    }
+
+    async function fetchChatgptRowsWithOpencodeLogin(): Promise<QuotaRow[] | null> {
+      const auth = await rpc.chatgpt({}).catch(() => undefined)
+      if (typeof auth?.token !== "string") return null
+      return fetchChatGptRows({ token: auth.token, accountID: auth.accountID })
+    }
+
+    function quotaText(): string {
+      const claudeText = renderPanelText(claudeState())
+      if (chatgptRows().length === 0) return claudeText
+      return claudeText + renderPanelText({ title: "ChatGPT usage", rows: chatgptRows() })
     }
 
     async function refresh() {
       void refreshChatgpt()
       try {
-        setState(await refreshAndGetState(opencodeToken))
+        setClaudeState(await refreshAndGetState(opencodeToken))
       } catch (error) {
         context.ui.toast.show({
           variant: "error",
@@ -75,8 +87,8 @@ export default Plugin.define({
           slash: { name: "quota" },
           run: () =>
             context.ui.toast.show({
-              title: state().title,
-              message: renderPanelText(state()) + (chatgpt().length > 0 ? renderPanelText({ title: "ChatGPT usage", rows: chatgpt() }) : ""),
+              title: claudeState().title,
+              message: quotaText(),
               duration: 8000,
             }),
         },
@@ -87,7 +99,7 @@ export default Plugin.define({
       append: "sidebar.footer",
       render: () => {
         const fg = context.theme.text.muted
-        const section = (title: string, rows: QuotaRow[]) => (
+        const renderSection = (title: string, rows: QuotaRow[]) => (
           <box flexDirection="column">
             <text fg={fg}>{title}</text>
             <For each={rows}>
@@ -100,7 +112,7 @@ export default Plugin.define({
                     </text>
                   </box>
                   <text fg={context.theme.primary}>
-                    {row.status === "ok" ? renderBarUnicode(row.percent, 28) : ""}
+                    {row.status === "ok" ? renderBarUnicode(row.percent, BAR_WIDTH) : ""}
                   </text>
                 </box>
               )}
@@ -109,8 +121,8 @@ export default Plugin.define({
         )
         return (
           <box flexDirection="column" paddingX={1}>
-            {section("Claude usage", state().rows)}
-            {chatgpt().length > 0 ? section("ChatGPT usage", chatgpt()) : null}
+            {renderSection("Claude usage", claudeState().rows)}
+            {chatgptRows().length > 0 ? renderSection("ChatGPT usage", chatgptRows()) : null}
           </box>
         )
       },

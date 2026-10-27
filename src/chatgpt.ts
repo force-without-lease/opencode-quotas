@@ -39,17 +39,17 @@ export async function fetchChatGptRows(auth: ChatGptAuth): Promise<QuotaRow[] | 
   }
 }
 
-function isWindow(v: unknown): v is UsageWindow {
-  if (typeof v !== "object" || v === null) return false;
-  const w = v as Record<string, unknown>;
-  return typeof w["used_percent"] === "number" && typeof w["reset_at"] === "number";
+function isWindow(value: unknown): value is UsageWindow {
+  if (typeof value !== "object" || value === null) return false;
+  const window = value as Record<string, unknown>;
+  return typeof window["used_percent"] === "number" && typeof window["reset_at"] === "number";
 }
 
-function toRow(label: string, w: UsageWindow, now: number): QuotaRow {
-  const resetsAtMs = w.reset_at * 1000;
+function toRow(label: string, window: UsageWindow, now: number): QuotaRow {
+  const resetsAtMs = window.reset_at * 1000;
   return {
     label,
-    percent: Math.round(clampPercent(w.used_percent)),
+    percent: Math.round(clampPercent(window.used_percent)),
     resetText: formatResetCountdown(new Date(resetsAtMs).toISOString(), now),
     resetsAtMs,
     status: "ok",

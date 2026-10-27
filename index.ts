@@ -4,23 +4,27 @@ import { QuotaRpc } from "./src/rpc.js"
 export default Plugin.define({
   id: "claudesub-quotas",
   async setup(context) {
+    async function activeOAuthCredential(integrationID: string) {
+      const connection = await context.integration.connection.active(integrationID)
+      if (!connection) return undefined
+      const credential = await context.integration.connection.resolve(connection)
+      return credential?.type === "oauth" ? credential : undefined
+    }
+
     // ~/.claude/.credentials.json is refreshed only while Claude Code runs, so
     // hand the TUI opencode's own Claude login; resolve() refreshes it when it
     // is about to expire.
     const rpc = await context.rpc.register(QuotaRpc, {
       token: async () => {
-        const connection = await context.integration.connection.active("anthropic")
-        if (!connection) return {}
-        const credential = await context.integration.connection.resolve(connection)
-        return credential?.type === "oauth" ? { token: credential.access } : {}
+        const credential = await activeOAuthCredential("anthropic")
+        return credential ? { token: credential.access } : {}
       },
       chatgpt: async () => {
-        const connection = await context.integration.connection.active("openai")
-        if (!connection) return {}
-        const credential = await context.integration.connection.resolve(connection)
-        if (credential?.type !== "oauth") return {}
+        const credential = await activeOAuthCredential("openai")
+        if (!credential) return {}
         const accountID = credential.metadata?.["accountID"]
-        return typeof accountID === "string" ? { token: credential.access, accountID } : { token: credential.access }
+        if (typeof accountID !== "string") return { token: credential.access }
+        return { token: credential.access, accountID }
       },
     })
     return () => rpc.dispose()
