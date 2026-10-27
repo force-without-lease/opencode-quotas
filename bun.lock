@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "opencode-claudesub-quotas",
+      "name": "opencode-quotas",
       "devDependencies": {
         "@opencode/plugin": "2.0.18",
         "@opentui/core": "^0.5.10",

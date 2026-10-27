@@ -4,7 +4,7 @@ import { resolveToken, type TokenResult } from "./auth.js";
 const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const API_TIMEOUT_MS = 10_000;
 const BETA_HEADER = "oauth-2025-04-20";
-const USER_AGENT = "opencode-claudesub-quotas/0.1.0";
+const USER_AGENT = "opencode-quotas/0.1.0";
 
 /**
  * Fetches usage data from the Anthropic OAuth usage endpoint.

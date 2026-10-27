@@ -1,4 +1,4 @@
-# opencode-claudesub-quotas
+# opencode-quotas
 
 OpenCode TUI plugin that adds a "Plan usage" panel to the sidebar, showing Claude subscription quota usage in real time.
 
@@ -17,14 +17,14 @@ Each row shows a progress bar, percentage, and reset countdown. Data is fetched 
 From OpenCode's plugin manager (`Ctrl+P` > Plugins > `Shift+I`):
 
 ```
-file:///path/to/opencode-claudesub-quotas
+file:///path/to/opencode-quotas
 ```
 
 Or add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
-  "plugin": ["file:///path/to/opencode-claudesub-quotas"]
+  "plugin": ["file:///path/to/opencode-quotas"]
 }
 ```
 
@@ -47,6 +47,6 @@ bun run src/cli.ts --watch     # auto-refresh
 
 - Reads OAuth credentials from `~/.claude/.credentials.json`
 - Polls `api.anthropic.com/api/oauth/usage` every 90 seconds
-- Caches responses in `~/.cache/opencode-claudesub-quotas/usage-cache.json`
+- Caches responses in `~/.cache/opencode-quotas/usage-cache.json`
 - Renders via opentui/solid JSX into the `sidebar_footer` slot
 - Also registers a `/quota` slash command for on-demand viewing

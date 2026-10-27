@@ -183,7 +183,7 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
 };
 
 const plugin: TuiPluginModule & { id: string } = {
-  id: "opencode-claudesub-quotas",
+  id: "opencode-quotas",
   tui: tuiPlugin,
 };
 export default plugin;

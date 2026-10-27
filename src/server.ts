@@ -13,7 +13,7 @@ const server: Plugin = async () => {
 };
 
 const plugin: PluginModule & { id: string } = {
-  id: "opencode-claudesub-quotas",
+  id: "opencode-quotas",
   server,
 };
 

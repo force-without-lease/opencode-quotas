@@ -6,7 +6,7 @@ import { fetchUsage } from "./api.js";
 import { resolveToken, type TokenResult } from "./auth.js";
 import { formatResetCountdown, clampPercent } from "./format.js";
 
-const CACHE_DIR = join(homedir(), ".cache", "opencode-claudesub-quotas");
+const CACHE_DIR = join(homedir(), ".cache", "opencode-quotas");
 const CACHE_FILE = join(CACHE_DIR, "usage-cache.json");
 
 const POLL_INTERVAL_MS = 90_000;

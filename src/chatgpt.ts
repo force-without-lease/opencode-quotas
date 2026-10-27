@@ -17,7 +17,7 @@ export interface ChatGptAuth {
 export async function fetchChatGptRows(auth: ChatGptAuth): Promise<QuotaRow[] | null> {
   const headers: Record<string, string> = {
     Authorization: `Bearer ${auth.token}`,
-    "User-Agent": "opencode-claudesub-quotas/0.1.0",
+    "User-Agent": "opencode-quotas/0.1.0",
   };
   if (auth.accountID) headers["ChatGPT-Account-Id"] = auth.accountID;
 
