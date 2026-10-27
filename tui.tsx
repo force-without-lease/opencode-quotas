@@ -13,7 +13,7 @@ const POLL_MS = 90_000
 const STALE_MS = 5 * 60 * 1000
 
 const loadingState = (): PanelState => ({
-  title: "Plan usage",
+  title: "Claude usage",
   stale: false,
   rows: [
     { label: "5-hour limit", percent: 0, resetText: "--", resetsAtMs: 0, status: "loading" },
@@ -71,7 +71,7 @@ export default Plugin.define({
       commands: [
         {
           id: "claudesub.quota",
-          title: "Plan usage",
+          title: "Claude usage",
           slash: { name: "quota" },
           run: () =>
             context.ui.toast.show({
@@ -109,7 +109,7 @@ export default Plugin.define({
         )
         return (
           <box flexDirection="column" paddingX={1}>
-            {section("Plan usage", state().rows)}
+            {section("Claude usage", state().rows)}
             {chatgpt().length > 0 ? section("ChatGPT usage", chatgpt()) : null}
           </box>
         )

@@ -150,7 +150,7 @@ function errorCache(reason: CachedUsage["errorReason"], now: number): CachedUsag
 function buildPanelState(data: CachedUsage | null, now: number): PanelState {
   if (data === null) {
     return {
-      title: "Plan usage",
+      title: "Claude usage",
       rows: [
         loadingRow("5-hour limit"),
         loadingRow("Weekly \u00b7 all models"),
@@ -164,14 +164,14 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
     return {
       title:
         data.error && data.errorReason === "auth"
-          ? "Plan usage (auth required)"
-          : "Plan usage",
+          ? "Claude usage (auth required)"
+          : "Claude usage",
       rows: [],
     };
   }
 
   return {
-    title: "Plan usage",
+    title: "Claude usage",
     rows: [
       makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, now),
       makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, now),
