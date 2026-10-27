@@ -9,7 +9,7 @@ export function clampPercent(v: number | null | undefined): number {
 
 /**
  * Formats an ISO 8601 reset timestamp into a short human-readable countdown.
- * Examples: "5m", "1h", "15h", "1d", "2d", "now"
+ * Examples: "5m", "1h 0m", "4h 39m", "1d", "2d", "now"
  */
 export function formatResetCountdown(
   resetsAtIso: string,
@@ -29,7 +29,7 @@ export function formatResetCountdown(
 
   const hours = deltaMs / 3_600_000;
   if (hours < 24) {
-    return `${Math.round(hours)}h`;
+    return `${Math.floor(hours)}h ${Math.floor(minutes % 60)}m`;
   }
 
   const days = hours / 24;
