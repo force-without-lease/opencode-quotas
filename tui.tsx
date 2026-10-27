@@ -6,9 +6,11 @@ import { loadCache, refreshAndGetState } from "./src/cache.js"
 import { QuotaRpc } from "./src/rpc.js"
 import { renderBarUnicode } from "./src/format.js"
 import { renderPanelText } from "./src/panel.js"
-import type { PanelState } from "./src/types.js"
+import { fetchChatGptRows } from "./src/chatgpt.js"
+import type { PanelState, QuotaRow } from "./src/types.js"
 
 const POLL_MS = 90_000
+const STALE_MS = 5 * 60 * 1000
 
 const loadingState = (): PanelState => ({
   title: "Plan usage",
@@ -25,6 +27,8 @@ export default Plugin.define({
   id: "claudesub-quotas.tui",
   setup(context) {
     const [state, setState] = createSignal<PanelState>(loadingState())
+    const [chatgpt, setChatgpt] = createSignal<QuotaRow[]>([])
+    let chatgptFetchedAt = 0
     const rpc = context.client.rpc(QuotaRpc)
 
     async function opencodeToken(): Promise<TokenResult> {
@@ -35,7 +39,19 @@ export default Plugin.define({
       return resolveToken()
     }
 
+    async function refreshChatgpt() {
+      const auth = await rpc.chatgpt({}).catch(() => undefined)
+      const rows = typeof auth?.token === "string" ? await fetchChatGptRows({ token: auth.token, accountID: auth.accountID }) : null
+      if (rows) {
+        chatgptFetchedAt = Date.now()
+        setChatgpt(rows)
+      } else if (Date.now() - chatgptFetchedAt > STALE_MS) {
+        setChatgpt([])
+      }
+    }
+
     async function refresh() {
+      void refreshChatgpt()
       try {
         setState(await refreshAndGetState(opencodeToken))
       } catch (error) {
@@ -60,7 +76,7 @@ export default Plugin.define({
           run: () =>
             context.ui.toast.show({
               title: state().title,
-              message: renderPanelText(state()),
+              message: renderPanelText(state()) + (chatgpt().length > 0 ? renderPanelText({ title: "ChatGPT usage", rows: chatgpt() }) : ""),
               duration: 8000,
             }),
         },
@@ -70,12 +86,11 @@ export default Plugin.define({
     const unregister = context.ui.slot({
       append: "sidebar.footer",
       render: () => {
-        const s = state()
         const fg = context.theme.text.muted
-        return (
-          <box flexDirection="column" paddingX={1}>
-            <text fg={fg}>Plan usage</text>
-            <For each={s.rows}>
+        const section = (title: string, rows: QuotaRow[]) => (
+          <box flexDirection="column">
+            <text fg={fg}>{title}</text>
+            <For each={rows}>
               {(row) => (
                 <box flexDirection="column">
                   <box flexDirection="row" justifyContent="space-between">
@@ -90,6 +105,12 @@ export default Plugin.define({
                 </box>
               )}
             </For>
+          </box>
+        )
+        return (
+          <box flexDirection="column" paddingX={1}>
+            {section("Plan usage", state().rows)}
+            {chatgpt().length > 0 ? section("ChatGPT usage", chatgpt()) : null}
           </box>
         )
       },
