@@ -12,6 +12,10 @@ import type { PanelState, QuotaRow } from "./src/types.js"
 const POLL_MS = 90_000
 const STALE_MS = 5 * 60 * 1000
 const BAR_WIDTH = 28
+const CHATGPT_ERROR_TITLES = {
+  auth: "ChatGPT usage (auth required)",
+  unavailable: "ChatGPT usage (unavailable)",
+}
 
 const loadingState = (): PanelState => ({
   title: "Claude usage",
@@ -28,7 +32,7 @@ export default Plugin.define({
   id: "opencode-quotas.tui",
   setup(context) {
     const [claudeState, setClaudeState] = createSignal<PanelState>(loadingState())
-    const [chatgptRows, setChatgptRows] = createSignal<QuotaRow[]>([])
+    const [chatgptState, setChatgptState] = createSignal<PanelState | null>(null)
     let chatgptFetchedAtMs = 0
     const rpc = context.client.rpc(QuotaRpc)
 
@@ -41,25 +45,25 @@ export default Plugin.define({
     }
 
     async function refreshChatgpt() {
-      const rows = await fetchChatgptRowsWithOpencodeLogin()
-      if (rows) {
-        chatgptFetchedAtMs = Date.now()
-        setChatgptRows(rows)
-      } else if (Date.now() - chatgptFetchedAtMs > STALE_MS) {
-        setChatgptRows([])
-      }
-    }
-
-    async function fetchChatgptRowsWithOpencodeLogin(): Promise<QuotaRow[] | null> {
       const auth = await rpc.chatgpt({}).catch(() => undefined)
-      if (typeof auth?.token !== "string") return null
-      return fetchChatGptRows({ token: auth.token, accountID: auth.accountID })
+      if (typeof auth?.token !== "string") {
+        setChatgptState(null)
+        return
+      }
+      const result = await fetchChatGptRows({ token: auth.token, accountID: auth.accountID })
+      if (result.ok) {
+        chatgptFetchedAtMs = Date.now()
+        setChatgptState({ title: "ChatGPT usage", rows: result.rows })
+      } else if (result.error === "auth" || Date.now() - chatgptFetchedAtMs > STALE_MS) {
+        setChatgptState({ title: CHATGPT_ERROR_TITLES[result.error], rows: [] })
+      }
     }
 
     function quotaText(): string {
       const claudeText = renderPanelText(claudeState())
-      if (chatgptRows().length === 0) return claudeText
-      return claudeText + renderPanelText({ title: "ChatGPT usage", rows: chatgptRows() })
+      const chatgpt = chatgptState()
+      if (!chatgpt) return claudeText
+      return claudeText + renderPanelText(chatgpt)
     }
 
     async function refresh() {
@@ -119,10 +123,14 @@ export default Plugin.define({
             </For>
           </box>
         )
+        const chatgptSection = () => {
+          const state = chatgptState()
+          return state ? renderSection(state.title, state.rows) : null
+        }
         return (
           <box flexDirection="column" paddingX={1}>
             {renderSection("Claude usage", claudeState().rows)}
-            {chatgptRows().length > 0 ? renderSection("ChatGPT usage", chatgptRows()) : null}
+            {chatgptSection()}
           </box>
         )
       },
