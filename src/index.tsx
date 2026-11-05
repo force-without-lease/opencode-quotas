@@ -2,7 +2,7 @@ import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
 import { createSignal } from "solid-js";
 import type { PanelState } from "./types.js";
 import { loadCache, refreshAndGetState } from "./cache.js";
-import { renderBarUnicode } from "./format.js";
+import { renderResetBar } from "./format.js";
 import { renderPanelText } from "./panel.js";
 
 const DEFAULT_POLL_MS = 90_000;
@@ -78,18 +78,26 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
             <text color={theme.textMuted} dim>{"Plan usage"}</text>
             {s.rows.map((row) => {
               const pct = row.status === "ok" ? `${row.percent}%` : "--";
-              const rst = row.status === "ok" ? `resets ${row.resetText}` : "";
-              const info = rst ? `${pct} ${rst}` : pct;
-              const bar = row.status === "ok"
-                ? renderBarUnicode(row.percent, 28)
-                : "";
+              const info = row.status === "ok" && row.exhaustionText ? `${pct} ${row.exhaustionText}` : pct;
+              const [width, setWidth] = createSignal(28);
+              const bar = () => renderResetBar(row.percent, width(), row.resetText);
               return (
                 <box flexDirection="column" gap={0}>
-                  <box flexDirection="row" justifyContent="space-between">
-                    <text color={theme.text}>{row.label}</text>
-                    <text color={theme.textMuted}>{info}</text>
+                  <box flexDirection="row" justifyContent="space-between" gap={1}>
+                    <text color={theme.text} flexShrink={1} minWidth={0} wrapMode="none" truncate>{row.label}</text>
+                    <text color={theme.textMuted} flexShrink={0}>{info}</text>
                   </box>
-                  {bar ? <text color={theme.primary}>{bar}</text> : null}
+                  {row.status === "ok" ? (
+                    <text
+                      width="100%"
+                      height={1}
+                      wrapMode="none"
+                      onSizeChange={function () { setWidth(this.width); }}
+                    >
+                      <span style={{ bg: theme.text, fg: theme.background }}>{bar().filled}</span>
+                      <span style={{ bg: theme.backgroundElement, fg: theme.text }}>{bar().empty}</span>
+                    </text>
+                  ) : null}
                 </box>
               );
             })}

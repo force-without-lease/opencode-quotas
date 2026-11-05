@@ -1,5 +1,5 @@
 import type { QuotaRow } from "./types.js";
-import { clampPercent, formatResetCountdown } from "./format.js";
+import { clampPercent, formatResetCountdown, formatExhaustionCountdown } from "./format.js";
 
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const API_TIMEOUT_MS = 10_000;
@@ -68,6 +68,9 @@ function toRow(window: UsageWindow, now: number): QuotaRow {
     label: windowLabel(window.limit_window_seconds),
     percent: Math.round(clampPercent(window.used_percent)),
     resetText: formatResetCountdown(new Date(resetsAtMs).toISOString(), now),
+    exhaustionText: formatExhaustionCountdown(
+      clampPercent(window.used_percent), resetsAtMs, window.limit_window_seconds * 1000, now,
+    ),
     resetsAtMs,
     status: "ok",
   };

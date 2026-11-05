@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import type { CachedUsage, FetchResult, PanelState, QuotaRow } from "./types.js";
 import { fetchUsage } from "./api.js";
 import { resolveToken, type TokenResult } from "./auth.js";
-import { formatResetCountdown, clampPercent } from "./format.js";
+import { formatResetCountdown, formatExhaustionCountdown, clampPercent } from "./format.js";
 
 const CACHE_DIR = join(homedir(), ".cache", "opencode-quotas");
 const CACHE_FILE = join(CACHE_DIR, "usage-cache.json");
@@ -50,12 +50,14 @@ async function persistCache(data: CachedUsage): Promise<void> {
  */
 export async function refreshAndGetState(
   getToken: () => Promise<TokenResult> = resolveToken,
+  force = false,
 ): Promise<PanelState> {
   const now = Date.now();
   const cacheAge = cachedData ? now - cachedData.fetchedAtMs : Infinity;
   const sinceLast = now - lastFetchAttemptMs;
 
   const needsFetch =
+    force ||
     cachedData === null ||
     cacheAge > POLL_INTERVAL_MS ||
     (cachedData.error && sinceLast > 15_000);
@@ -80,7 +82,7 @@ export async function refreshAndGetState(
     }
   }
 
-  return buildPanelState(cachedData, now);
+  return buildPanelState(cachedData, Date.now());
 }
 
 /**
@@ -173,10 +175,10 @@ function buildPanelState(data: CachedUsage | null, now: number): PanelState {
   return {
     title: "Claude usage",
     rows: [
-      makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, now),
-      makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, now),
+      makeRow("5-hour limit", data.fiveHourPercent, data.fiveHourResetsAt, 5 * 60 * 60 * 1000, data.fetchedAtMs, now),
+      makeRow("Weekly \u00b7 all models", data.weeklyPercent, data.weeklyResetsAt, 7 * 24 * 60 * 60 * 1000, data.fetchedAtMs, now),
       ...(data.fablePercent != null && data.fableResetsAt != null
-        ? [makeRow("Weekly \u00b7 Fable", data.fablePercent, data.fableResetsAt, now)]
+        ? [makeRow("Weekly \u00b7 Fable", data.fablePercent, data.fableResetsAt, 7 * 24 * 60 * 60 * 1000, data.fetchedAtMs, now)]
         : []),
     ],
   };
@@ -186,6 +188,8 @@ function makeRow(
   label: string,
   percent: number,
   resetsAt: string,
+  windowMs: number,
+  fetchedAtMs: number,
   now: number,
 ): QuotaRow {
   const parsed = new Date(resetsAt).getTime();
@@ -195,6 +199,7 @@ function makeRow(
     label,
     percent: Math.round(percent),
     resetText: resetsAt ? formatResetCountdown(resetsAt, now) : "--",
+    exhaustionText: formatExhaustionCountdown(percent, resetsAtMs, windowMs, fetchedAtMs, now),
     resetsAtMs,
     status: "ok",
   };

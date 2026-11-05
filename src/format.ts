@@ -19,7 +19,42 @@ export function formatResetCountdown(
   const resetMs = new Date(resetsAtIso).getTime();
   if (!Number.isFinite(resetMs)) return "--";
 
-  const deltaMs = resetMs - now;
+  return formatDuration(resetMs - now);
+}
+
+export function formatExhaustionCountdown(
+  percent: number,
+  resetsAtMs: number,
+  windowMs: number,
+  fetchedAtMs: number,
+  nowMs = fetchedAtMs,
+): string {
+  const elapsedMs = fetchedAtMs - (resetsAtMs - windowMs);
+  if (
+    !Number.isFinite(percent) ||
+    !Number.isFinite(elapsedMs) ||
+    !Number.isFinite(nowMs) ||
+    resetsAtMs <= nowMs ||
+    nowMs < fetchedAtMs
+  ) {
+    return "ETA --";
+  }
+  if (percent >= 100) return "Exhausted";
+  if (percent <= 0 || elapsedMs <= 0 || elapsedMs >= windowMs) return "ETA --";
+
+  const remainingMs = elapsedMs * (100 - percent) / percent - (nowMs - fetchedAtMs);
+  if (!Number.isFinite(remainingMs)) return "ETA --";
+  const duration = formatDuration(remainingMs).replace(" 0m", "");
+  return `ETA ~${duration}`;
+}
+
+export function renderResetBar(percent: number, width: number, resetText: string) {
+  const text = ` ${resetText}`.slice(0, width).padEnd(width);
+  const filled = Math.round(clampPercent(percent) / 100 * width);
+  return { filled: text.slice(0, filled), empty: text.slice(filled) };
+}
+
+function formatDuration(deltaMs: number): string {
   if (deltaMs <= 0) return "now";
 
   const minutes = deltaMs / 60_000;
@@ -33,7 +68,7 @@ export function formatResetCountdown(
   }
 
   const days = hours / 24;
-  return `${Math.round(days)}d`;
+  return `${Math.floor(days)}d ${Math.floor(hours % 24)}h`;
 }
 
 /**
@@ -82,6 +117,7 @@ export function renderTuiPanel(
     label: string;
     percent: number;
     resetText: string;
+    exhaustionText?: string;
     status: string;
   }>,
 ): string {
@@ -113,7 +149,8 @@ export function renderTuiPanel(
       reset = `resets ${row.resetText}`;
     }
 
-    lines.push(`${label}${bar} ${pct}  ${reset}`);
+    const exhaustion = row.status === "ok" && row.exhaustionText ? `  ${row.exhaustionText}` : "";
+    lines.push(`${label}${bar} ${pct}  ${reset}${exhaustion}`);
   }
 
   return lines.join("\n");
@@ -129,6 +166,7 @@ export function renderDesktopPanel(
     label: string;
     percent: number;
     resetText: string;
+    exhaustionText?: string;
     status: string;
   }>,
 ): string {
@@ -165,11 +203,14 @@ export function renderDesktopPanel(
       resetStr = `resets ${row.resetText}`;
     }
 
+    const summary = row.status === "ok" && row.exhaustionText
+      ? `${pctStr}  ${row.exhaustionText}`
+      : pctStr;
     const labelLine =
       "  " +
       row.label +
-      " ".repeat(Math.max(1, INNER_WIDTH - row.label.length - pctStr.length - 4)) +
-      pctStr +
+      " ".repeat(Math.max(1, INNER_WIDTH - row.label.length - Bun.stringWidth(summary) - 4)) +
+      summary +
       "  ";
     lines.push("\u2502" + labelLine + "\u2502");
 

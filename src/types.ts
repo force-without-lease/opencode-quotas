@@ -24,6 +24,7 @@ export interface QuotaRow {
   label: string;
   percent: number;
   resetText: string;
+  exhaustionText?: string;
   resetsAtMs: number;
   status: "ok" | "unavailable" | "loading" | "auth_required";
 }
