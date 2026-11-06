@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { mock, test } from "bun:test";
 import { testRender } from "@opentui/solid";
 
-test("패널 클릭 새로고침과 자동 조회 간격의 90초 대기", async () => {
+test("패널 클릭 새로고침의 30초 제한", async () => {
   const calls: boolean[] = [];
   const state = {
     title: "Claude usage",
@@ -37,7 +37,7 @@ test("패널 클릭 새로고침과 자동 조회 간격의 90초 대기", async
     now += 10_000;
     await view.mockMouse.click(2, 2);
     assert.deepEqual(calls, [false]);
-    now += 79_999;
+    now += 19_999;
     await view.mockMouse.click(2, 2);
     assert.deepEqual(calls, [false]);
     now += 1;
@@ -45,7 +45,7 @@ test("패널 클릭 새로고침과 자동 조회 간격의 90초 대기", async
     await view.flush();
     assert.deepEqual(calls, [false, true]);
     await view.mockMouse.click(2, 2);
-    now += 89_999;
+    now += 29_999;
     await view.mockMouse.click(2, 2);
     assert.equal(calls.length, 2);
     now += 1;

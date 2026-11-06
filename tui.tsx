@@ -10,7 +10,7 @@ import { fetchChatGptRows } from "./src/chatgpt.js"
 import type { PanelState, QuotaRow } from "./src/types.js"
 
 const POLL_MS = 90_000
-const REFRESH_COOLDOWN_MS = POLL_MS
+const REFRESH_COOLDOWN_MS = 30_000
 const STALE_MS = 5 * 60 * 1000
 const BAR_WIDTH = 28
 const CHATGPT_ERROR_TITLES = {

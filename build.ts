@@ -2,10 +2,8 @@ import { build } from "bun";
 import solidPlugin from "@opentui/solid/bun-plugin";
 
 const externals = [
-  "@opencode-ai/plugin",
-  "@opencode-ai/plugin/tui",
-  "@opencode-ai/sdk",
-  "@opencode-ai/sdk/v2",
+  "@opencode/plugin",
+  "@opencode/plugin/tui",
   "@opentui/core",
   "@opentui/solid",
   "solid-js",
@@ -24,11 +22,8 @@ const buildOpts = {
   define: { "process.env.NODE_ENV": JSON.stringify("production") },
 };
 
-// Server entry: no-op server plugin so OpenCode's server loader doesn't reject us
-const serverResult = await build({ ...buildOpts, entrypoints: ["src/server.ts"] });
-
-// TUI entry: the actual quota panel plugin
-const tuiResult = await build({ ...buildOpts, entrypoints: ["src/index.tsx"] });
+const serverResult = await build({ ...buildOpts, entrypoints: ["index.ts"] });
+const tuiResult = await build({ ...buildOpts, entrypoints: ["tui.tsx"] });
 
 // CLI entry: standalone usage
 const cliResult = await build({ ...buildOpts, entrypoints: ["src/cli.ts"] });

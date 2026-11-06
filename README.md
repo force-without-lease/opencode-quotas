@@ -1,30 +1,25 @@
 # opencode-quotas
 
-OpenCode TUI plugin that adds a "Plan usage" panel to the sidebar, showing Claude subscription quota usage in real time.
+OpenCode V2 plugin that adds Claude and ChatGPT quota usage to the TUI sidebar.
 
 ## What it does
 
-Displays three quota rows in the sidebar footer:
+Displays quota rows in the sidebar footer:
 
 - **5-hour limit** -- rolling 5-hour usage window
 - **Weekly, all models** -- 7-day aggregate across all models
 - **Weekly, Fable** -- 7-day Fable usage (per-model cap, hidden if the plan has none)
 
-Each row shows a progress bar, percentage, and reset countdown. Data is fetched from the Anthropic OAuth usage API and cached locally.
+Each row shows a progress bar, percentage, reset countdown, and estimated exhaustion time.
 
 ## Install
 
-From OpenCode's plugin manager (`Ctrl+P` > Plugins > `Shift+I`):
-
-```
-file:///path/to/opencode-quotas
-```
-
-Or add to `~/.config/opencode/opencode.json`:
+Add the plugin directory to OpenCode V2's `opencode.json`:
 
 ```json
 {
-  "plugin": ["file:///path/to/opencode-quotas"]
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["file:///path/to/opencode-quotas"]
 }
 ```
 
@@ -32,7 +27,7 @@ Or add to `~/.config/opencode/opencode.json`:
 
 ```sh
 bun install
-bun run build
+bun run build.ts
 ```
 
 ## Standalone CLI
@@ -45,8 +40,9 @@ bun run src/cli.ts --watch     # auto-refresh
 
 ## How it works
 
-- Reads OAuth credentials from `~/.claude/.credentials.json`
-- Polls `api.anthropic.com/api/oauth/usage` every 90 seconds
+- The V2 server part reads Claude and ChatGPT OAuth credentials through OpenCode integrations.
+- The TUI part requests credentials through typed RPC and polls usage APIs every 90 seconds.
 - Caches responses in `~/.cache/opencode-quotas/usage-cache.json`
-- Renders via opentui/solid JSX into the `sidebar_footer` slot
+- Renders via opentui/solid JSX into the `sidebar.footer` slot
 - Also registers a `/quota` slash command for on-demand viewing
+- The standalone CLI reads Claude credentials from `~/.claude/.credentials.json` or `CLAUDE_CODE_OAUTH_TOKEN`.
