@@ -77,10 +77,11 @@ const tuiPlugin: TuiPlugin = async (api, _options, _meta) => {
           <box flexDirection="column" paddingX={1} gap={0}>
             <text color={theme.textMuted} dim>{"Plan usage"}</text>
             {s.rows.map((row) => {
-              const pct = row.status === "ok" ? `${row.percent}%` : "--";
-              const info = row.status === "ok" && row.exhaustionText ? `${pct} ${row.exhaustionText}` : pct;
+              const info = row.status === "ok"
+                ? `resets ${row.resetText} · ${row.exhaustionText ?? "ETA --"}`
+                : "--";
               const [width, setWidth] = createSignal(28);
-              const bar = () => renderResetBar(row.percent, width(), row.resetText);
+              const bar = () => renderResetBar(row.percent, width(), row.status === "ok" ? `${row.percent}%` : "--");
               return (
                 <box flexDirection="column" gap={0}>
                   <box flexDirection="row" justifyContent="space-between" gap={1}>

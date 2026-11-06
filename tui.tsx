@@ -120,13 +120,15 @@ export default Plugin.define({
             <For each={rows}>
               {(row) => {
                 const [width, setWidth] = createSignal(BAR_WIDTH)
-                const bar = () => renderResetBar(row.percent, width(), row.resetText)
+                const bar = () => renderResetBar(row.percent, width(), row.status === "ok" ? `${row.percent}%` : "--")
                 return (
                   <box flexDirection="column">
                     <box flexDirection="row" justifyContent="space-between" gap={1}>
                       <text flexShrink={1} minWidth={0} wrapMode="none" truncate>{row.label}</text>
                       <text fg={fg} flexShrink={0}>
-                        {row.status === "ok" ? `${row.percent}% ${row.exhaustionText ?? ""}` : "--"}
+                        {row.status === "ok"
+                          ? `resets ${row.resetText} · ${row.exhaustionText ?? "ETA --"}`
+                          : "--"}
                       </text>
                     </box>
                     {row.status === "ok" ? (

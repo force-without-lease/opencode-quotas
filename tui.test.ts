@@ -30,9 +30,8 @@ test("패널 클릭 새로고침과 자동 조회 간격의 90초 대기", async
   const view = await testRender(() => section(), { width: 38, height: 6 });
   try {
     const frame = await view.waitForFrame((text) => text.includes("ETA ~9m"));
-    assert.ok(frame.split("\n")[1]?.includes("78% ETA ~9m"));
-    assert.ok(frame.split("\n")[2]?.includes("4h 15m"));
-    assert.ok(!frame.includes("resets"));
+    assert.ok(frame.split("\n")[1]?.includes("resets 4h 15m · ETA ~9m"));
+    assert.ok(frame.split("\n")[2]?.includes("78%"));
     await view.mockMouse.click(2, 2);
     assert.deepEqual(calls, [false]);
     now += 10_000;
