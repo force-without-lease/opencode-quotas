@@ -134,19 +134,19 @@ export function renderTuiPanel(
     if (row.status === "loading") {
       bar = "[loading...       ]";
       pct = " --";
-      reset = "resets --";
+      reset = "--";
     } else if (row.status === "auth_required") {
       bar = "[auth required     ]";
       pct = " --";
-      reset = "resets --";
+      reset = "--";
     } else if (row.status === "unavailable") {
       bar = "[unavailable       ]";
       pct = " --";
-      reset = "resets --";
+      reset = "--";
     } else {
       bar = renderBar(row.percent, BAR_WIDTH);
       pct = padLeft(`${row.percent}%`, 4);
-      reset = `resets ${row.resetText}`;
+      reset = row.resetText;
     }
 
     const exhaustion = row.status === "ok" && row.exhaustionText ? `  ${row.exhaustionText}` : "";
@@ -196,11 +196,11 @@ export function renderDesktopPanel(
         : row.status === "auth_required"
           ? "auth required"
           : "unavailable";
-      resetStr = "resets --";
+      resetStr = "--";
     } else {
       pctStr = `${row.percent}%`;
       barLine = renderBarUnicode(row.percent, BAR_INNER);
-      resetStr = `resets ${row.resetText}`;
+      resetStr = row.resetText;
     }
 
     const summary = row.status === "ok" && row.exhaustionText

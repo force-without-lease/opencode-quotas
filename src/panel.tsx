@@ -79,7 +79,7 @@ function formatRowText(row: QuotaRow): string {
 
   const bar = renderBarUnicode(row.percent, BAR_WIDTH);
   const pct = `${row.percent}%`.padStart(4);
-  const reset = `resets ${row.resetText}`;
+  const reset = row.resetText;
   const exhaustion = row.exhaustionText ? `  ${row.exhaustionText}` : "";
   return `  ${row.label}${pct}${exhaustion}\n    ${bar}  ${reset}`;
 }

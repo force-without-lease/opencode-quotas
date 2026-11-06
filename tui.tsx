@@ -127,7 +127,7 @@ export default Plugin.define({
                       <text flexShrink={1} minWidth={0} wrapMode="none" truncate>{row.label}</text>
                       <text fg={fg} flexShrink={0}>
                         {row.status === "ok"
-                          ? `resets ${row.resetText} · ${row.exhaustionText ?? "ETA --"}`
+                          ? `${row.resetText} · ${row.exhaustionText ?? "ETA --"}`
                           : "--"}
                       </text>
                     </box>

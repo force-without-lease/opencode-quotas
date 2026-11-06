@@ -63,7 +63,7 @@ test("사용 기간 평균 소진 속도로 남은 시간을 계산하고 표시
       const estimateLine = output.split("\n").find((line) => line.includes("ETA ~30m"));
       assert.ok(estimateLine?.includes("80%"));
       assert.ok(output.includes("ETA ~3d"));
-      assert.ok(output.includes("resets 3h 0m"));
+      assert.ok(output.includes("3h 0m"));
     }
     const estimateLine = renderDesktopPanel(state.title, state.rows).split("\n").find((line) => line.includes("ETA ~30m"));
     assert.ok(estimateLine);
